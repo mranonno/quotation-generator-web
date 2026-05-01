@@ -1,12 +1,6 @@
-type Product = {
-  name: string;
-  brand: string;
-  model: string;
-  origin?: string;
-  qty: number;
-  price: number;
-  image?: string;
-};
+import { useMemo } from "react";
+import { Product } from "@/types/product";
+import { calcTotal } from "@/utils/calcTotal";
 
 type Props = {
   serial: string;
@@ -25,125 +19,146 @@ export default function QuotationTemplate({
   customer,
   products,
 }: Props) {
-  const total = products.reduce((sum, p) => sum + p.qty * p.price, 0);
+  // Memoize total to avoid recalculation on unrelated re-renders
+  const total = useMemo(() => calcTotal(products), [products]);
+
+  // Currency Formatter for Taka
+  const formatCurrency = (amount: number) =>
+    `৳${new Intl.NumberFormat("en-BD").format(amount)}`;
+
+  // Safer Address Splitting Logic
+  const addressWords = customer.address ? customer.address.split(" ") : [];
+  const addressLine1 = addressWords.slice(0, 7).join(" ");
+  const addressLine2 = addressWords.slice(7).join(" ");
 
   return (
-    <div className="w-[210mm] h-[297mm] bg-white relative text-[12px] shadow-lg text-gray-900">
-      {/* Background */}
+    <div
+      id="quotation"
+      className="w-[210mm] h-[297mm] bg-white relative text-[12px] shadow-lg text-gray-900 overflow-hidden"
+    >
+      {/* Background Layer */}
       <img
         src="/pad.png"
-        alt="pad"
-        className="absolute inset-0 w-full h-full object-cover"
+        alt="Letterhead Background"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
 
-      <div className="relative z-10 p-10 flex flex-col h-full pb-40">
-        {/* Header */}
-        <div className="flex justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[#0B43A1] tracking-wide">
-              QUOTATION
-            </h1>
-            <p className="text-gray-500 text-xs mt-1">
-              Ref: <span className="text-gray-800 font-medium">{serial}</span>
+      <div className="relative z-10 p-10 flex flex-col h-full">
+        {/* Header Section */}
+        <div className="flex mt-8 justify-between items-center">
+          <h1 className="text-3xl font-bold text-[#0B43A1] tracking-wide">
+            QUOTATION
+          </h1>
+        </div>
+
+        {/* Customer & Meta Info */}
+        <div className="flex justify-between items-start mt-12">
+          <div className="text-xs text-gray-700 leading-relaxed max-w-[60%]">
+            <p className="font-semibold text-gray-500 uppercase text-[10px] mb-1">
+              Bill To:
             </p>
+            <p>
+              <span className="text-gray-500">Customer:</span>{" "}
+              <span className="text-gray-900 font-medium">
+                {customer.name || "N/A"}
+              </span>
+            </p>
+            <p>
+              <span className="text-gray-500">Phone:</span>{" "}
+              <span className="text-gray-800">{customer.phone || "N/A"}</span>
+            </p>
+            <div className="flex gap-1">
+              <span className="text-gray-500 shrink-0">Address:</span>
+              <span className="text-gray-800">
+                {addressLine1}
+                {addressLine2 && <br />}
+                {addressLine2}
+              </span>
+            </div>
           </div>
 
-          <div className="text-right text-xs text-gray-600">
-            <p>
+          <div className="text-right text-xs">
+            <p className="text-gray-500">
+              Ref: <span className="text-gray-800 font-medium">{serial}</span>
+            </p>
+            <p className="mt-1">
               <span className="text-gray-500">Date:</span>{" "}
               <span className="text-gray-800 font-medium">{date}</span>
             </p>
           </div>
         </div>
 
-        {/* Customer */}
-        <div className="mt-4 text-xs text-gray-700 leading-relaxed">
-          <p>
-            <span className="text-gray-500">Customer:</span>{" "}
-            <span className="text-gray-900 font-medium">{customer.name}</span>
-          </p>
-
-          <p>
-            <span className="text-gray-500">Phone:</span>{" "}
-            <span className="text-gray-800">{customer.phone}</span>
-          </p>
-
-          <p>
-            <span className="text-gray-500">Address:</span>{" "}
-            <span className="text-gray-800">{customer.address}</span>
-          </p>
-        </div>
-
-        {/* Table */}
-        <div className="mt-4 flex-1">
-          <table className="w-full border border-gray-300 text-[11px]">
-            {/* Header */}
-            <thead className="bg-gray-100 text-gray-700">
+        {/* Product Table */}
+        <div className="mt-6 flex-1">
+          <table className="w-full border-collapse border border-gray-300 text-[11px]">
+            <thead className="bg-gray-100 text-gray-700 uppercase text-[10px]">
               <tr>
-                <th className="border p-2 w-[5%]">#</th>
-                <th className="border p-2 w-[12%]">Image</th>
-                <th className="border p-2 w-[38%]">Product Details</th>
-                <th className="border p-2 w-[10%]">Qty</th>
-                <th className="border p-2 w-[15%]">Price</th>
-                <th className="border p-2 w-[20%]">Total</th>
+                <th className="border border-gray-300 p-2 w-[5%]">#</th>
+                <th className="border border-gray-300 p-2 w-[12%]">Image</th>
+                <th className="border border-gray-300 p-2 w-[38%] text-left">
+                  Product Details
+                </th>
+                <th className="border border-gray-300 p-2 w-[10%]">Qty</th>
+                <th className="border border-gray-300 p-2 w-[15%]">Price</th>
+                <th className="border border-gray-300 p-2 w-[20%]">Total</th>
               </tr>
             </thead>
 
-            {/* Body */}
             <tbody className="text-gray-800">
               {products.map((p, i) => (
-                <tr key={i}>
-                  {/* Serial */}
-                  <td className="border p-2 text-center text-gray-600">
-                    {i + 1}
+                <tr key={i} className="hover:bg-gray-50/50">
+                  <td className="border border-gray-300 p-2 text-center text-gray-500">
+                    {String(i + 1).padStart(2, "0")}
                   </td>
 
-                  {/* Image */}
-                  <td className="border p-2 text-center">
+                  <td className="border border-gray-300 p-2 text-center">
                     {p.image ? (
                       <img
                         src={p.image}
                         alt={p.name}
-                        className="w-10 h-10 object-cover mx-auto border"
+                        className="w-10 h-10 object-contain mx-auto border bg-white"
                       />
                     ) : (
-                      <span className="text-gray-400 text-[10px]">
+                      <span className="text-gray-400 text-[9px] italic">
                         No Image
                       </span>
                     )}
                   </td>
 
-                  {/* Details */}
-                  <td className="border p-2">
-                    <div className="font-semibold text-gray-900">{p.name}</div>
-
-                    <div className="text-[10px] text-gray-600 mt-1 leading-tight">
+                  <td className="border border-gray-300 p-2">
+                    <div className="font-bold text-gray-900">
+                      {p.name || "Untitled Product"}
+                    </div>
+                    <div className="text-[10px] text-gray-600 mt-0.5 leading-tight">
                       <p>
-                        Brand: <span className="text-gray-800">{p.brand}</span>
+                        Brand:{" "}
+                        <span className="text-gray-800 font-medium">
+                          {p.brand || "-"}
+                        </span>
                       </p>
                       <p>
-                        Model: <span className="text-gray-800">{p.model}</span>
+                        Model:{" "}
+                        <span className="text-gray-800 font-medium">
+                          {p.model || "-"}
+                        </span>
                       </p>
                       <p>
                         Origin:{" "}
-                        <span className="text-gray-800">{p.origin || "-"}</span>
+                        <span className="text-gray-800 font-medium">
+                          {p.origin || "-"}
+                        </span>
                       </p>
                     </div>
                   </td>
 
-                  {/* Qty */}
-                  <td className="border p-2 text-center text-gray-800">
+                  <td className="border border-gray-300 p-2 text-center">
                     {p.qty}
                   </td>
-
-                  {/* Price */}
-                  <td className="border p-2 text-center text-gray-800">
-                    ৳{p.price}
+                  <td className="border border-gray-300 p-2 text-center">
+                    {formatCurrency(p.price)}
                   </td>
-
-                  {/* Total */}
-                  <td className="border p-2 text-center font-medium text-gray-900">
-                    ৳{p.qty * p.price}
+                  <td className="border border-gray-300 p-2 text-center font-bold text-gray-900">
+                    {formatCurrency(p.qty * p.price)}
                   </td>
                 </tr>
               ))}
@@ -151,26 +166,32 @@ export default function QuotationTemplate({
           </table>
         </div>
 
-        {/* Grand Total */}
+        {/* Totals Section */}
         <div className="flex justify-end mt-4">
           <div className="w-1/3 border border-gray-300 bg-gray-50">
-            <div className="flex justify-between p-2 text-gray-800">
-              <span className="font-medium">Grand Total</span>
-              <span className="font-bold text-gray-900">৳{total}</span>
+            <div className="flex justify-between items-center p-2.5">
+              <span className="font-bold text-gray-700 uppercase text-[10px]">
+                Grand Total
+              </span>
+              <span className="font-black text-gray-900 text-sm">
+                {formatCurrency(total)}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-between mt-10 text-xs text-gray-700">
+        {/* Signature Footer */}
+        <div className="flex justify-between mt-16 pb-20 text-xs text-gray-700">
           <div className="text-center">
-            <p className="border-t w-40 pt-1 text-gray-600">Prepared By</p>
+            <div className="border-t border-gray-400 w-44 pt-1.5 text-gray-600 font-medium">
+              Prepared By
+            </div>
           </div>
 
           <div className="text-center">
-            <p className="border-t w-40 pt-1 text-gray-600">
+            <div className="border-t border-gray-400 w-44 pt-1.5 text-gray-600 font-medium">
               Authorized Signature
-            </p>
+            </div>
           </div>
         </div>
       </div>

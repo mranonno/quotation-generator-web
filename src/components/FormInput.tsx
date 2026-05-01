@@ -16,7 +16,7 @@ export default function FormInput({
   return (
     <div className="mb-3">
       {label && (
-        <label className="block text-sm font-medium text-gray-600 mb-1">
+        <label className="block text-sm font-medium text-gray-900 mb-1">
           {label}
         </label>
       )}
@@ -32,7 +32,7 @@ export default function FormInput({
           border border-gray-300
           rounded-md
           text-gray-800
-          placeholder-gray-400
+          placeholder-gray-700
           focus:outline-none
           focus:border-blue-500
           focus:ring-2
