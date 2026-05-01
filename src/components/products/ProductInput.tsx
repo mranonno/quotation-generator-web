@@ -8,7 +8,8 @@ type Props = {
   value: string | number;
   type?: string;
   placeholder?: string;
-  icon?: ReactNode; // Added icon support
+  icon?: ReactNode;
+  required?: boolean; // 1. Added required to the Type
   onChange: (name: string, value: string) => void;
 };
 
@@ -19,17 +20,18 @@ export default function ProductInput({
   type = "text",
   placeholder,
   icon,
+  required = false, // 2. Default to false
   onChange,
 }: Props) {
   return (
     <div className="w-full space-y-1.5">
-      {/* Label with slightly better tracking and color */}
       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide ml-1">
         {label}
+        {/* Optional: Add a red asterisk if required */}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
       <div className="relative group">
-        {/* Render Icon if provided */}
         {icon && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
             {icon}
@@ -40,6 +42,7 @@ export default function ProductInput({
           type={type}
           value={value}
           placeholder={placeholder}
+          required={required} // 3. Pass it to the native input
           onChange={(e) => onChange(name, e.target.value)}
           className={`
             w-full transition-all duration-200

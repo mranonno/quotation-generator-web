@@ -11,6 +11,7 @@ import {
   Layers,
   Save,
   XCircle,
+  Loader2,
 } from "lucide-react";
 
 type ProductState = {
@@ -33,6 +34,7 @@ const initialState: ProductState = {
 
 export default function ProductForm() {
   const [product, setProduct] = useState<ProductState>(initialState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (name: string, value: string) => {
     setProduct((prev) => ({
@@ -41,15 +43,37 @@ export default function ProductForm() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Product Data:", {
-      ...product,
-      price: Number(product.price),
-      stock: Number(product.stock),
-    });
-    alert("Product added successfully!");
-    setProduct(initialState);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...product,
+          price: Number(product.price),
+          stock: Number(product.stock),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save product");
+      }
+
+      alert("✅ Product saved to MongoDB successfully!");
+      setProduct(initialState);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Submission Error:", error);
+      alert(`❌ Error: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -72,7 +96,8 @@ export default function ProductForm() {
             value={product.name}
             onChange={handleChange}
             placeholder="e.g. Industrial Printer"
-            icon={<Tag className="w-4 h-4" />} // Assuming ProductInput supports icons
+            icon={<Tag className="w-4 h-4" />}
+            required
           />
           <ProductInput
             label="Brand"
@@ -120,6 +145,7 @@ export default function ProductForm() {
             value={product.price}
             onChange={handleChange}
             placeholder="0.00"
+            required
           />
           <ProductInput
             label="Available Stock"
@@ -128,6 +154,7 @@ export default function ProductForm() {
             value={product.stock}
             onChange={handleChange}
             placeholder="0"
+            required
           />
         </div>
       </div>
@@ -136,18 +163,29 @@ export default function ProductForm() {
       <div className="pt-6 flex items-center justify-end gap-3 border-t border-slate-100">
         <button
           type="button"
+          disabled={isSubmitting}
           onClick={() => setProduct(initialState)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all disabled:opacity-50"
         >
           <XCircle className="w-4 h-4" />
           Clear Form
         </button>
         <button
           type="submit"
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg shadow-blue-200 transition-all"
+          disabled={isSubmitting}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:active:scale-100 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg shadow-blue-200 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
         >
-          <Save className="w-4 h-4" />
-          Save Product
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Save Product
+            </>
+          )}
         </button>
       </div>
     </form>

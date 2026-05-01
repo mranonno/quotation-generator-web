@@ -45,11 +45,11 @@ export default function StatCard({
       <div className="flex items-start justify-between">
         <div>
           <p
-            className={`text-sm font-medium mb-1 ${highlight ? "text-slate-400" : "text-slate-500"}`}
+            className={`text-xl font-medium mb-1 ${highlight ? "text-slate-400" : "text-slate-500"}`}
           >
             {title}
           </p>
-          <h3 className="text-2xl font-extrabold tracking-tight">{value}</h3>
+          <h3 className="text-3xl font-medium tracking-tight">{value}</h3>
         </div>
 
         <div
@@ -71,7 +71,7 @@ export default function StatCard({
             />
           </div>
           <span
-            className={`text-xs font-semibold ${highlight ? "text-emerald-400" : "text-emerald-600"}`}
+            className={`font-semibold ${highlight ? "text-emerald-400" : "text-emerald-600"}`}
           >
             {trend}
           </span>

@@ -5,7 +5,7 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import QuickActionCard from "@/components/dashboard/QuickActionCard";
 import { useRouter } from "next/navigation";
 // Assuming you use lucide-react for icons
-import { Plus, LayoutDashboard, Zap } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -17,8 +17,7 @@ export default function DashboardPage() {
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <LayoutDashboard className="w-6 h-6 text-blue-600" />
-              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                 Dashboard Overview
               </h1>
             </div>
@@ -66,10 +65,10 @@ export default function DashboardPage() {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200/60 overflow-hidden">
               <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-800">
+                <h2 className="text-xl font-bold text-slate-800">
                   Recent Activity
                 </h2>
-                <button className="text-sm text-blue-600 font-medium hover:underline">
+                <button className=" text-blue-600 font-medium hover:underline">
                   View All
                 </button>
               </div>

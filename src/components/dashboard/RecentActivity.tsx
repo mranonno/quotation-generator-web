@@ -66,13 +66,13 @@ export default function RecentActivity() {
                           : "saved as draft"}
                       </span>
                     </p>
-                    <div className="mt-1 flex items-center gap-1 text-xs text-slate-400">
+                    <div className="mt-1 flex items-center gap-1 text-slate-400">
                       <Clock className="h-3 w-3" />
                       <span>{activity.time}</span>
                     </div>
                   </div>
 
-                  <div className="whitespace-nowrap text-right text-sm">
+                  <div className="whitespace-nowrap text-right text-lg font-bold text-slate-900">
                     <span className="font-bold text-slate-900">
                       {activity.amount}
                     </span>

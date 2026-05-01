@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import QuotationTemplate from "@/components/QuotationTemplate";
 import { Product } from "@/types/product";
 import html2canvas from "html2canvas";
@@ -10,48 +10,18 @@ import {
   Plus,
   Trash2,
   Download,
-  ImageIcon,
+  // ImageIcon,
   Hash,
   DollarSign,
   Briefcase,
   Package,
   XCircle,
   Search,
+  Loader2,
 } from "lucide-react";
 
-// Mock Data for the Demo Phase
-const DEMO_INVENTORY = [
-  {
-    name: "Industrial Printer X1",
-    brand: "HP",
-    model: "Pro-500",
-    origin: "Japan",
-    price: 45000,
-  },
-  {
-    name: "Mechanical Keyboard",
-    brand: "Logitech",
-    model: "G-Pro",
-    origin: "China",
-    price: 8200,
-  },
-  {
-    name: "Smart Sensor Hub",
-    brand: "Xiaomi",
-    model: "Hub-V3",
-    origin: "China",
-    price: 2400,
-  },
-  {
-    name: "Heavy Duty Motor",
-    brand: "Siemens",
-    model: "M-90",
-    origin: "Germany",
-    price: 125000,
-  },
-];
-
 const INITIAL_PRODUCT: Product = {
+  _id: "",
   name: "",
   brand: "",
   model: "",
@@ -67,28 +37,50 @@ export default function CreateQuotationPage() {
     phone: "",
     address: "",
   });
+
   const [products, setProducts] = useState<Product[]>([]);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // 🔹 Live Inventory State
+  const [inventory, setInventory] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 1. Fetch live products from MongoDB
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        setInventory(data);
+      } catch (error) {
+        console.error("Failed to fetch inventory:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCustomer((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Manual Add
   const addManualProduct = () =>
     setProducts((prev) => [...prev, { ...INITIAL_PRODUCT }]);
 
-  // 🔹 Select from List
-  const selectFromInventory = (item: (typeof DEMO_INVENTORY)[0]) => {
+  // 2. Updated to use the live inventory item structure
+  const selectFromInventory = (item: Product) => {
     const newProduct: Product = {
       ...INITIAL_PRODUCT,
       name: item.name,
-      brand: item.brand,
-      model: item.model,
-      origin: item.origin,
-      price: item.price,
+      brand: item.brand || "",
+      model: item.model || "",
+      origin: item.origin || "",
+      price: item.price || 0,
+      image: item.image || "",
     };
     setProducts((prev) => [...prev, newProduct]);
     setIsInventoryOpen(false);
@@ -130,18 +122,19 @@ export default function CreateQuotationPage() {
     }
   };
 
-  const filteredInventory = DEMO_INVENTORY.filter(
+  // 3. Filter the live inventory instead of mock data
+  const filteredInventory = inventory.filter(
     (item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.brand.toLowerCase().includes(searchTerm.toLowerCase()),
+      item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.brand?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
-      {/* 🔴 LEFT SIDE: BUILDER FORM */}
+      {/* LEFT SIDE: BUILDER FORM */}
       <div className="w-full lg:w-[45%] p-6 lg:p-10 overflow-y-auto border-r border-slate-200 bg-white">
         <header className="mb-8">
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
             Create Quotation
           </h1>
           <p className="text-slate-500 text-sm">
@@ -158,7 +151,6 @@ export default function CreateQuotationPage() {
             </h2>
           </div>
           <div className="grid gap-4">
-            {/* Client Name Input */}
             <div className="relative group">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
               <input
@@ -169,9 +161,7 @@ export default function CreateQuotationPage() {
                 onChange={handleCustomerChange}
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
-              {/* Phone Input */}
               <div className="relative group">
                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                 <input
@@ -182,8 +172,6 @@ export default function CreateQuotationPage() {
                   onChange={handleCustomerChange}
                 />
               </div>
-
-              {/* Address Input */}
               <div className="relative group">
                 <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                 <input
@@ -217,7 +205,6 @@ export default function CreateQuotationPage() {
               key={i}
               className="group p-5 mb-4 rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-xl hover:shadow-blue-900/5 transition-all relative"
             >
-              {/* Remove Button */}
               <button
                 onClick={() => removeProduct(i)}
                 className="absolute -top-2 -right-2 bg-white border border-slate-200 p-1.5 rounded-full text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:shadow-md opacity-0 group-hover:opacity-100 transition-all z-10"
@@ -225,10 +212,9 @@ export default function CreateQuotationPage() {
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
 
-              {/* Product Name / Description */}
               <input
-                placeholder="Product Description (e.g. Industrial HP Printer)"
-                className="w-full text-lg font-bold text-slate-900 mb-4 focus:text-blue-600 outline-none bg-transparent placeholder:text-slate-400 placeholder:font-normal"
+                placeholder="Product Description"
+                className="w-full text-lg font-bold text-slate-900 mb-4 focus:text-blue-600 outline-none bg-transparent"
                 value={p.name}
                 onChange={(e) => updateProduct(i, "name", e.target.value)}
               />
@@ -236,83 +222,59 @@ export default function CreateQuotationPage() {
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <input
                   placeholder="Brand"
-                  className="text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-blue-500 text-slate-900 font-medium transition-all placeholder:text-slate-400"
+                  className="text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg"
                   value={p.brand}
                   onChange={(e) => updateProduct(i, "brand", e.target.value)}
                 />
                 <input
                   placeholder="Model"
-                  className="text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-blue-500 text-slate-900 font-medium transition-all placeholder:text-slate-400"
+                  className="text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg"
                   value={p.model}
                   onChange={(e) => updateProduct(i, "model", e.target.value)}
                 />
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Price Input */}
                 <div className="relative flex-1 group/input">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within/input:text-blue-500 transition-colors" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
                     type="number"
                     placeholder="Price"
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-blue-500 text-slate-900 font-bold transition-all placeholder:text-slate-400"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg"
                     value={p.price}
                     onChange={(e) =>
                       updateProduct(i, "price", Number(e.target.value))
                     }
                   />
                 </div>
-
-                {/* Quantity Input */}
                 <div className="relative w-28 group/input">
-                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within/input:text-blue-500 transition-colors" />
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
                     type="number"
                     placeholder="Qty"
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-blue-500 text-slate-900 font-bold transition-all placeholder:text-slate-400"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg"
                     value={p.qty}
                     onChange={(e) =>
                       updateProduct(i, "qty", Number(e.target.value))
                     }
                   />
                 </div>
-
-                {/* Image Upload Button */}
-                <label className="flex items-center justify-center h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all group/img">
-                  <ImageIcon className="w-5 h-5 text-slate-400 group-hover/img:text-blue-500" />
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file)
-                        updateProduct(i, "image", URL.createObjectURL(file));
-                    }}
-                  />
-                </label>
               </div>
             </div>
           ))}
 
-          {/* Action Choice Buttons */}
           <div className="grid grid-cols-2 gap-4 pt-2">
             <button
               onClick={addManualProduct}
               className="py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 font-bold text-xs hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all flex flex-col items-center gap-2 group"
             >
-              <div className="p-2 bg-slate-100 rounded-full group-hover:bg-blue-100 transition-colors">
-                <Plus className="w-4 h-4 text-slate-500 group-hover:text-blue-600" />
-              </div>
-              Add Item Manually
+              <Plus className="w-4 h-4" /> Add Item Manually
             </button>
             <button
               onClick={() => setIsInventoryOpen(true)}
               className="py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 font-bold text-xs hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/50 transition-all flex flex-col items-center gap-2 group"
             >
-              <div className="p-2 bg-slate-100 rounded-full group-hover:bg-emerald-100 transition-colors">
-                <Package className="w-4 h-4 text-slate-500 group-hover:text-emerald-600" />
-              </div>
-              Select from Inventory
+              <Package className="w-4 h-4" /> Select from Inventory
             </button>
           </div>
         </section>
@@ -325,9 +287,12 @@ export default function CreateQuotationPage() {
         </button>
       </div>
 
-      {/* 🔵 RIGHT SIDE: STICKY PREVIEW */}
+      {/* RIGHT SIDE: PREVIEW */}
       <div className="hidden lg:flex flex-1 bg-slate-200 items-start justify-center p-12 overflow-y-auto sticky top-0 h-screen">
-        <div className="shadow-2xl shadow-slate-400/50 scale-[0.8] xl:scale-95 origin-top transition-transform">
+        <div
+          id="quotation"
+          className="shadow-2xl shadow-slate-400/50 scale-[0.8] xl:scale-95 origin-top transition-transform"
+        >
           <QuotationTemplate
             serial="QTN-2024-001"
             date={new Date().toLocaleDateString("en-GB")}
@@ -337,9 +302,9 @@ export default function CreateQuotationPage() {
         </div>
       </div>
 
-      {/* 🟢 INVENTORY MODAL */}
+      {/* INVENTORY MODAL */}
       {isInventoryOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
               <div>
@@ -347,14 +312,11 @@ export default function CreateQuotationPage() {
                   Select from Inventory
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Choose a product to add to quotation
+                  Choose a product to add
                 </p>
               </div>
-              <button
-                onClick={() => setIsInventoryOpen(false)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <XCircle className="w-6 h-6" />
+              <button onClick={() => setIsInventoryOpen(false)}>
+                <XCircle className="w-6 h-6 text-slate-400" />
               </button>
             </div>
 
@@ -364,7 +326,7 @@ export default function CreateQuotationPage() {
                 <input
                   type="text"
                   placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -372,35 +334,45 @@ export default function CreateQuotationPage() {
             </div>
 
             <div className="overflow-y-auto p-4 space-y-2">
-              {filteredInventory.map((item, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => selectFromInventory(item)}
-                  className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-100 rounded-lg text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
-                      <Package className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-800 text-sm">
-                        {item.name}
-                      </p>
-                      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                        {item.brand} • {item.model}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-extrabold text-slate-900 text-sm">
-                      ৳{item.price.toLocaleString()}
-                    </p>
-                    <p className="text-[10px] text-blue-500 font-bold uppercase">
-                      Select
-                    </p>
-                  </div>
+              {isLoading ? (
+                <div className="flex justify-center p-10">
+                  <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
                 </div>
-              ))}
+              ) : filteredInventory.length > 0 ? (
+                filteredInventory.map((item, idx) => (
+                  <div
+                    key={item._id || idx}
+                    onClick={() => selectFromInventory(item)}
+                    className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-100 rounded-lg">
+                        <Package className="w-5 h-5 text-slate-500" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800 text-sm">
+                          {item.name}
+                        </p>
+                        <p className="text-[10px] text-slate-400 uppercase">
+                          {item.brand} • {item.model}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-extrabold text-slate-900 text-sm">
+                        ৳{item.price?.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-blue-500 font-bold">
+                        SELECT
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-slate-400 py-10">
+                  No products found.
+                </p>
+              )}
             </div>
           </div>
         </div>
